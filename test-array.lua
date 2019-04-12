@@ -20,3 +20,10 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
 local Array = require'array'
+
+local a = Array()
+assert(#a == 0)
+
+local a = Array{3, 4}
+assert(a[1] == 3)
+assert(a[2] == 4)

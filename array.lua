@@ -19,3 +19,23 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
+local Array = {}
+setmetatable(
+  Array,
+  {
+    -- Copy array elements from t into a new Array. If t is not given, return an
+    -- empty Array.
+    __call = function(self, t)
+      local a = {}
+      setmetatable(a, self)
+      if t then
+	if type(t) ~= 'table' then
+	  error('Table expected, got ' .. tostring(t), 2)
+	end
+	table.move(t, 1, #t, 1, a)
+      end
+      return a
+    end,
+})
+
+return Array
