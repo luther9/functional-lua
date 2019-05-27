@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 --[[
-Copyright 2018 Luther Thompson
+Copyright 2019 Luther Thompson
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License (GPL3) as published by
@@ -21,5 +21,18 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-require'test-iterator'
-require'test-array'
+-- Iterate through integers, from start to stop. The default value of start is
+-- 1. If stop is nil, the iteration never ends.
+local function count(start, stop)
+  local i = start or 1
+  return function()
+    if stop and i > stop then
+      return
+    end
+    return count(i + 1, stop), i
+  end
+end
+
+return {
+  count = count,
+}

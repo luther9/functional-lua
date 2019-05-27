@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 --[[
-Copyright 2018 Luther Thompson
+Copyright 2019 Luther Thompson
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License (GPL3) as published by
@@ -21,5 +21,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-require'test-iterator'
-require'test-array'
+local iterator = require'iterator'
+
+local iter0 = iterator.count(1, 1)
+local iter1, n = iter0()
+assert(n == 1)
+assert(iter1() == nil)
