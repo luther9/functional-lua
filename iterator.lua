@@ -48,7 +48,19 @@ local function filter(f, iter)
   end
 end
 
+local function map(f, iter)
+  return function()
+    return (function(iter, ...)
+      if iter == nil then
+        return
+      end
+      return map(f, iter), f(...)
+    end)(iter())
+  end
+end
+
 return {
   count = count,
   filter = filter,
+  map = map,
 }

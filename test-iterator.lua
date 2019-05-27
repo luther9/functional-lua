@@ -34,3 +34,8 @@ local iter0 = iterator.filter(
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
+
+local iter0 = iterator.map(function(x) return x * 2 end, iterator.count(1, 1))
+local iter1, n = iter0()
+assert(n == 2)
+assert(iter1() == nil)
