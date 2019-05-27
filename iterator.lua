@@ -33,6 +33,22 @@ local function count(start, stop)
   end
 end
 
+local function filter(f, iter)
+  return function()
+    local function seek(iter, ...)
+      if iter == nil then
+        return
+      end
+      if f(...) then
+        return filter(f, iter), ...
+      end
+      return seek(iter())
+    end
+    return seek(iter())
+  end
+end
+
 return {
   count = count,
+  filter = filter,
 }

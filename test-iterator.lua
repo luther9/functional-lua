@@ -27,3 +27,10 @@ local iter0 = iterator.count(1, 1)
 local iter1, n = iter0()
 assert(n == 1)
 assert(iter1() == nil)
+
+local iter0 = iterator.filter(
+  function(x) return x % 2 == 0 end,
+  iterator.count(1, 3))
+local iter1, n = iter0()
+assert(n == 2)
+assert(iter1() == nil)
