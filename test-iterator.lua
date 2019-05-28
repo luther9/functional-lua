@@ -54,3 +54,7 @@ local iter1, i, v = iter0()
 assert(i == 1)
 assert(v == 'one')
 assert(iter1() == nil)
+
+local t = iterator.array(iterator.count(10, 11))
+assert(t[1] == 10)
+assert(t[2] == 11)

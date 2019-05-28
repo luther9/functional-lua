@@ -36,7 +36,7 @@ end
 local function filter(f, iter)
   return function()
     local function seek(iter, ...)
-      if iter == nil then
+      if not iter then
         return
       end
       if f(...) then
@@ -51,7 +51,7 @@ end
 local function map(f, iter)
   return function()
     return (function(iter, ...)
-      if iter == nil then
+      if not iter then
         return
       end
       return map(f, iter), f(...)
@@ -61,7 +61,7 @@ end
 
 local function reduce(f, iter, init)
   return (function(iter, ...)
-    if iter == nil then
+    if not iter then
       return init
     end
     return reduce(f, iter, f(init, ...))
@@ -70,7 +70,7 @@ end
 
 local function forEach(f, iter)
   return (function(iter, ...)
-    if iter ~= nil then
+    if iter then
       f(...)
       return forEach(f, iter)
     end
@@ -80,7 +80,7 @@ end
 local function fromFor(iter, state, key)
   return function()
     return (function(key, ...)
-      if key == nil then
+      if not key then
         return
       end
       return fromFor(iter, state, key), key, ...
@@ -88,11 +88,30 @@ local function fromFor(iter, state, key)
   end
 end
 
+local function zip2(a, b)
+  return function()
+    local aIter, aValue = a()
+    local bIter, bValue = b()
+    if not (aIter and bIter) then
+      return
+    end
+    return zip2(aIter, bIter), aValue, bValue
+  end
+end
+
+local function array(iter)
+  local a = {}
+  forEach(function(i, v) a[i] = v end, zip2(count(), iter))
+  return a
+end
+
 return {
+  array = array,
   count = count,
   filter = filter,
   forEach = forEach,
   fromFor = fromFor,
   map = map,
   reduce = reduce,
+  zip = zip,
 }
