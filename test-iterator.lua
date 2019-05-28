@@ -39,3 +39,7 @@ local iter0 = iterator.map(function(x) return x * 2 end, iterator.count(1, 1))
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
+
+assert(
+  iterator.reduce(function(sum, x) return sum + x end, iterator.count(1, 10), 0)
+  == 55)

@@ -59,8 +59,18 @@ local function map(f, iter)
   end
 end
 
+local function reduce(f, iter, init)
+  return (function(iter, ...)
+    if iter == nil then
+      return init
+    end
+    return reduce(f, iter, f(init, ...))
+  end)(iter())
+end
+
 return {
   count = count,
   filter = filter,
   map = map,
+  reduce = reduce,
 }
