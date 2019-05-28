@@ -77,10 +77,22 @@ local function forEach(f, iter)
   end)(iter())
 end
 
+local function fromFor(iter, state, key)
+  return function()
+    return (function(key, ...)
+      if key == nil then
+        return
+      end
+      return fromFor(iter, state, key), key, ...
+    end)(iter(state, key))
+  end
+end
+
 return {
   count = count,
   filter = filter,
   forEach = forEach,
+  fromFor = fromFor,
   map = map,
   reduce = reduce,
 }

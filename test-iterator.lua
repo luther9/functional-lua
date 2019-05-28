@@ -48,3 +48,9 @@ local t = {}
 iterator.forEach(function(x) t[x] = x end, iterator.count(1, 2))
 assert(t[1] == 1)
 assert(t[2] == 2)
+
+local iter0 = iterator.fromFor(ipairs{'one'})
+local iter1, i, v = iter0()
+assert(i == 1)
+assert(v == 'one')
+assert(iter1() == nil)
