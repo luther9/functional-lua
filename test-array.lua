@@ -1,5 +1,5 @@
 --[[
-Copyright 2018 Luther Thompson
+Copyright 2019 Luther Thompson
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License (GPL3) as published by
@@ -27,3 +27,9 @@ assert(#a == 0)
 local a = Array{3, 4}
 assert(a[1] == 3)
 assert(a[2] == 4)
+
+local iter0 = Array{10}:iterator()
+local iter1, i, v = iter0()
+assert(i == 1)
+assert(v == 10)
+assert(iter1() == nil)

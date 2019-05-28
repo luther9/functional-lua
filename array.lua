@@ -1,5 +1,5 @@
 --[[
-Copyright 2018 Luther Thompson
+Copyright 2019 Luther Thompson
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License (GPL3) as published by
@@ -19,7 +19,22 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-local Array = {}
+local function iterator(self, i)
+  return function()
+    local value = self[i]
+    if value == nil then
+      return
+    end
+    return iterator(self, i + 1), i, value
+  end
+end
+
+local Array = {
+  iterator = function(self)
+    return iterator(self, 1)
+  end,
+}
+Array.__index = Array
 setmetatable(
   Array,
   {
