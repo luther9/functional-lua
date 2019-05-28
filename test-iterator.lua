@@ -43,3 +43,8 @@ assert(iter1() == nil)
 assert(
   iterator.reduce(function(sum, x) return sum + x end, iterator.count(1, 10), 0)
   == 55)
+
+local t = {}
+iterator.forEach(function(x) t[x] = x end, iterator.count(1, 2))
+assert(t[1] == 1)
+assert(t[2] == 2)

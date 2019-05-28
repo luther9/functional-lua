@@ -68,9 +68,19 @@ local function reduce(f, iter, init)
   end)(iter())
 end
 
+local function forEach(f, iter)
+  return (function(iter, ...)
+    if iter ~= nil then
+      f(...)
+      return forEach(f, iter)
+    end
+  end)(iter())
+end
+
 return {
   count = count,
   filter = filter,
+  forEach = forEach,
   map = map,
   reduce = reduce,
 }
