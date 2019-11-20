@@ -17,9 +17,9 @@ sequences.
   be more awkward to work with than arrays.
 
 * `iterator`: A function that takes no arguments and returns the next iterator
-  in the sequence, along with any data values. The final iterator returns `nil`.
-  This sequence can be infinite. This is perhaps the most fundamental sequence
-  type in functional programming.
+  in the sequence and a data value. The final iterator returns nothing.  This
+  sequence can be infinite. This is perhaps the most fundamental sequence type
+  in functional programming.
 
 * `list`: Linked lists. If created from an iterator, it will be lazily
   evaluated.

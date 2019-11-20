@@ -34,38 +34,38 @@ local function count(start, stop)
 end
 
 local function filter(f, iter)
-  return function()
-    local function seek(iter, ...)
-      if not iter then
-        return
-      end
-      if f(...) then
-        return filter(f, iter), ...
-      end
-      return seek(iter())
+
+  local function seek(iter, v)
+    if not iter then
+      return
     end
+    if f(v) then
+      return filter(f, iter), v
+    end
+    return seek(iter())
+  end
+
+  return function()
     return seek(iter())
   end
 end
 
 local function map(f, iter)
   return function()
-    return (function(iter, ...)
-      if not iter then
-        return
-      end
-      return map(f, iter), f(...)
-    end)(iter())
+    local iter_, v = iter()
+    if not iter_ then
+      return
+    end
+    return map(f, iter_), f(v)
   end
 end
 
 local function reduce(f, iter, init)
-  return (function(iter, ...)
-    if not iter then
-      return init
-    end
-    return reduce(f, iter, f(init, ...))
-  end)(iter())
+  local iter_, v = iter()
+  if not iter_ then
+    return init
+  end
+  return reduce(f, iter_, f(init, v))
 end
 
 local function toFor(iter)
@@ -73,42 +73,51 @@ local function toFor(iter)
 end
 
 local function forEach(f, iter)
-  return (function(iter, ...)
-    if iter then
-      f(...)
-      return forEach(f, iter)
-    end
-  end)(iter())
+  for _, v in toFor(iter) do
+    f(v)
+  end
 end
 
 local function fromFor(iter, state, key)
   return function()
-    return (function(key, ...)
-      if not key then
-        return
-      end
-      return fromFor(iter, state, key), key, ...
-    end)(iter(state, key))
+    local v = table.pack(iter(state, key))
+    local key_ = v[1]
+    if key_ == nil then
+      return
+    end
+    return fromFor(iter, state, key_), v
   end
 end
 
-local function zip2(a, b)
+-- All arguments must be iterators. Yield tuples of one element from each
+-- iterator. Stop if any of the iterators end.
+local function zip(...)
+  local iters = {...}
   return function()
-    local aIter, aValue = a()
-    local bIter, bValue = b()
-    if not (aIter and bIter) then
-      return
+    local iters_ = {}
+    local values = {}
+    for i, iter in ipairs(iters) do
+      local iter_, v = iter()
+      if not iter_ then
+	return
+      end
+      iters_[i] = iter_
+      values[i] = v
     end
-    return zip2(aIter, bIter), aValue, bValue
+    return zip(table.unpack(iters_)), values
   end
+end
+
+local function unpack(iter)
+  local iter_, v = iter()
+  if not iter_ then
+    return
+  end
+  return v, unpack(iter_)
 end
 
 local function array(iter)
-  local a = {}
-  for _, i, v in toFor(zip2(count(), iter)) do
-    a[i] = v
-  end
-  return a
+  return {unpack(iter)}
 end
 
 return {
@@ -120,5 +129,6 @@ return {
   map = map,
   reduce = reduce,
   toFor = toFor,
+  unpack = unpack,
   zip = zip,
 }
