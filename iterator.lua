@@ -68,6 +68,10 @@ local function reduce(f, iter, init)
   end)(iter())
 end
 
+local function toFor(iter)
+  return function(_, f) return f() end, nil, iter
+end
+
 local function forEach(f, iter)
   return (function(iter, ...)
     if iter then
@@ -101,7 +105,9 @@ end
 
 local function array(iter)
   local a = {}
-  forEach(function(i, v) a[i] = v end, zip2(count(), iter))
+  for _, i, v in toFor(zip2(count(), iter)) do
+    a[i] = v
+  end
   return a
 end
 
@@ -113,5 +119,6 @@ return {
   fromFor = fromFor,
   map = map,
   reduce = reduce,
+  toFor = toFor,
   zip = zip,
 }

@@ -1,6 +1,7 @@
 This code uses a functional programming style.
 
-Since Lua supports proper tail calls, loops are not allowed.
+Since Lua supports proper tail calls, `while` loops are not allowed. `for` loops
+are allowed, because they can act as a replacement for a forEach function.
 
 We do not assign to any variable after declaration.
 
