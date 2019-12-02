@@ -21,40 +21,37 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-local iterator = require'iterator'
+local Iterator = require'iterator'
 
-local iter0 = iterator.count(1, 1)
+local iter0 = Iterator.count(1, 1)
 local iter1, n = iter0()
 assert(n == 1)
 assert(iter1() == nil)
 
-local iter0 = iterator.filter(
-  function(x) return x % 2 == 0 end,
-  iterator.count(1, 3))
+local iter0 = Iterator.count(1, 3).filter(function(x) return x % 2 == 0 end)
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
 
-local iter0 = iterator.map(function(x) return x * 2 end, iterator.count(1, 1))
+local iter0 = Iterator.count(1, 1).map(function(x) return x * 2 end)
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
 
 assert(
-  iterator.reduce(function(sum, x) return sum + x end, iterator.count(1, 10), 0)
-  == 55)
+  Iterator.count(1, 10).reduce(function(sum, x) return sum + x end, 0) == 55)
 
 local t = {}
-iterator.forEach(function(x) t[x] = x end, iterator.count(1, 2))
+Iterator.count(1, 2).forEach(function(x) t[x] = x end)
 assert(t[1] == 1)
 assert(t[2] == 2)
 
-local iter0 = iterator.fromFor(ipairs{'one'})
+local iter0 = Iterator.fromFor(ipairs{'one'})
 local iter1, v = iter0()
 assert(v[1] == 1)
 assert(v[2] == 'one')
 assert(iter1() == nil)
 
-local t = iterator.array(iterator.count(10, 11))
+local t = Iterator.count(10, 11).array
 assert(t[1] == 10)
 assert(t[2] == 11)

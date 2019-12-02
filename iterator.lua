@@ -21,73 +21,128 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
+local Iterator
+
 -- Iterate through integers, from start to stop. The default value of start is
 -- 1. If stop is nil, the iteration never ends.
 local function count(start, stop)
   local i = start or 1
-  return function()
-    if stop and i > stop then
-      return
-    end
-    return count(i + 1, stop), i
-  end
-end
-
-local function filter(f, iter)
-
-  local function seek(iter, v)
-    if not iter then
-      return
-    end
-    if f(v) then
-      return filter(f, iter), v
-    end
-    return seek(iter())
-  end
-
-  return function()
-    return seek(iter())
-  end
-end
-
-local function map(f, iter)
-  return function()
-    local iter_, v = iter()
-    if not iter_ then
-      return
-    end
-    return map(f, iter_), f(v)
-  end
-end
-
-local function reduce(f, iter, init)
-  local iter_, v = iter()
-  if not iter_ then
-    return init
-  end
-  return reduce(f, iter_, f(init, v))
-end
-
-local function toFor(iter)
-  return function(_, f) return f() end, nil, iter
-end
-
-local function forEach(f, iter)
-  for _, v in toFor(iter) do
-    f(v)
-  end
+  return Iterator(
+    function()
+      if stop and i > stop then
+	return
+      end
+      return count(i + 1, stop), i
+    end)
 end
 
 local function fromFor(iter, state, key)
-  return function()
-    local v = table.pack(iter(state, key))
-    local key_ = v[1]
-    if key_ == nil then
-      return
+  return Iterator(
+    function()
+      local v = table.pack(iter(state, key))
+      local key_ = v[1]
+      if key_ == nil then
+	return
+      end
+      return fromFor(iter, state, key_), v
+    end)
+end
+
+Iterator = {
+  count = count,
+  fromFor = fromFor,
+}
+
+-- Helper function for the filter method.
+local function seek(f, iter, v)
+  if iter then
+    if f(v) then
+      return iter.filter(f), v
     end
-    return fromFor(iter, state, key_), v
+    return seek(f, iter())
   end
 end
+
+setmetatable(
+  Iterator,
+  {
+    __call = function(class, iter)
+      local self
+
+      local function filter(f)
+	return class(
+	  function()
+	    return seek(f, self())
+	  end)
+      end
+
+      local function map(f)
+	return class(
+	  function()
+	    local iter, v = self()
+	    if iter then
+	      return iter.map(f), f(v)
+	    end
+	  end)
+      end
+
+      local function reduce(f, init)
+	local iter, v = self()
+	if not iter then
+	  return init
+	end
+	return iter.reduce(f, f(init, v))
+      end
+
+      local function toFor()
+	return function(_, self) return self() end, nil, self
+      end
+
+      local function forEach(f)
+	for _, v in toFor() do
+	  f(v)
+	end
+      end
+
+      local function unpack()
+	local iter, v = self()
+	if iter then
+	  return v, iter.unpack()
+	end
+      end
+
+      self = {
+	filter = filter,
+	map = map,
+	reduce = reduce,
+	toFor = toFor,
+	forEach = forEach,
+	unpack = unpack,
+      }
+
+      setmetatable(
+	self,
+	{
+	  __call = function()
+	    local iter_, v = iter()
+	    if iter_ then
+	      return class(iter_), v
+	    end
+	  end,
+
+	  __index = function(self, key)
+	    if key == 'array' then
+	      local a = {unpack()}
+	      self.array = a
+	      return a
+	    end
+	    return nil
+	  end,
+	})
+
+      return self
+    end,
+  })
 
 -- All arguments must be iterators. Yield tuples of one element from each
 -- iterator. Stop if any of the iterators end.
@@ -108,27 +163,4 @@ local function zip(...)
   end
 end
 
-local function unpack(iter)
-  local iter_, v = iter()
-  if not iter_ then
-    return
-  end
-  return v, unpack(iter_)
-end
-
-local function array(iter)
-  return {unpack(iter)}
-end
-
-return {
-  array = array,
-  count = count,
-  filter = filter,
-  forEach = forEach,
-  fromFor = fromFor,
-  map = map,
-  reduce = reduce,
-  toFor = toFor,
-  unpack = unpack,
-  zip = zip,
-}
+return Iterator

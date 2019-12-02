@@ -14,7 +14,8 @@ sequences.
 * `table`: Similar to arrays, but they can't preserve order.
 
 * `args`: The `...` in vararg functions. While supported by Lua syntax, they can
-  be more awkward to work with than arrays.
+  be more awkward to work with than arrays. Since the `...` is not a first class
+  value, it can't be represented as a class without converting it to an array.
 
 * `iterator`: A function that takes no arguments and returns the next iterator
   in the sequence and a data value. The final iterator returns nothing.  This

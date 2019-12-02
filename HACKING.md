@@ -9,8 +9,5 @@ The following operations are fundamental for table construction, and are
 therefore allowed: key assignment, `setmetatable`, `table.insert`, and
 `table.move`. `table.sort` is also allowed for performance reasons.
 
-Linked lists may be mutated internally to implement lazy evaluation. Users
+Objects may be mutated internally for caching and lazy evaluation. Users
 should treat them as immutable.
-
-Each module treats its own sequence type as the most fundamental sequence type
-in Lua.
