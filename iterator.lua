@@ -48,9 +48,30 @@ local function fromFor(iter, state, key)
     end)
 end
 
+-- All arguments must be iterators. Yield tuples of one element from each
+-- iterator. Stop if any of the iterators end.
+local function zip(...)
+  local iters = {...}
+  return Iterator(
+    function()
+      local iters_ = {}
+      local values = {}
+      for i, iter in ipairs(iters) do
+	local iter_, v = iter()
+	if not iter_ then
+	  return
+	end
+	iters_[i] = iter_
+	values[i] = v
+      end
+      return zip(table.unpack(iters_)), values
+    end)
+end
+
 Iterator = {
   count = count,
   fromFor = fromFor,
+  zip = zip,
 }
 
 -- Helper function for the filter method.
@@ -143,24 +164,5 @@ setmetatable(
       return self
     end,
   })
-
--- All arguments must be iterators. Yield tuples of one element from each
--- iterator. Stop if any of the iterators end.
-local function zip(...)
-  local iters = {...}
-  return function()
-    local iters_ = {}
-    local values = {}
-    for i, iter in ipairs(iters) do
-      local iter_, v = iter()
-      if not iter_ then
-	return
-      end
-      iters_[i] = iter_
-      values[i] = v
-    end
-    return zip(table.unpack(iters_)), values
-  end
-end
 
 return Iterator

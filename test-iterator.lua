@@ -55,3 +55,9 @@ assert(iter1() == nil)
 local t = Iterator.count(10, 11).array
 assert(t[1] == 10)
 assert(t[2] == 11)
+
+local iter0 = Iterator.zip(Iterator.count(1, 1), Iterator.count(2, 2))
+local iter1, arr = iter0()
+assert(arr[1] == 1)
+assert(arr[2] == 2)
+assert(iter1() == nil)
