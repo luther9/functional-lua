@@ -21,6 +21,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
+-- The Iterator class. The argument is an iterator function.
 local Iterator
 
 -- Iterate through integers, from start to stop. The default value of start is
@@ -36,6 +37,7 @@ local function count(start, stop)
     end)
 end
 
+-- Convert a for loop iterator to an Iterator object.
 local function fromFor(iter, state, key)
   return Iterator(
     function()
@@ -90,6 +92,7 @@ setmetatable(
     __call = function(class, iter)
       local self
 
+      -- Yield only the elements where f(element) is truthy.
       local function filter(f)
 	return class(
 	  function()
@@ -97,6 +100,7 @@ setmetatable(
 	  end)
       end
 
+      -- Make a new element where f is applied to each element.
       local function map(f)
 	return class(
 	  function()
@@ -107,6 +111,8 @@ setmetatable(
 	  end)
       end
 
+      -- Combine all elements of the iterator into a single value. init is the
+      -- seed value. f is called as f(init, element) for each element.
       local function reduce(f, init)
 	local iter, v = self()
 	if not iter then
@@ -115,16 +121,21 @@ setmetatable(
 	return iter.reduce(f, f(init, v))
       end
 
+      -- Convert the iterator for use in a for loop. The resulting iterator will
+      -- yield the same function and value as an Iterator object. The function
+      -- result should usually be ignored in the loop body.
       local function toFor()
 	return function(_, self) return self() end, nil, self
       end
 
+      -- Execute f(element) for each element in the iterator.
       local function forEach(f)
 	for _, v in toFor() do
 	  f(v)
 	end
       end
 
+      -- Return all elements from the iterator.
       local function unpack()
 	local iter, v = self()
 	if iter then
@@ -153,6 +164,9 @@ setmetatable(
 
 	  __index = function(self, key)
 	    if key == 'array' then
+	      -- Convert the iterator to an array and cache the result. We can't
+	      -- return an Array object, because that would require a circular
+	      -- dependency.
 	      local a = {unpack()}
 	      self.array = a
 	      return a
