@@ -61,3 +61,12 @@ local iter1, arr = iter0()
 assert(arr[1] == 1)
 assert(arr[2] == 2)
 assert(iter1() == nil)
+
+local iter = Iterator.count(1, 4)
+assert(iter.sum == 10)
+assert(iter.product == 24)
+
+local iter = Iterator
+  .fromFor(ipairs{'a', 'b', 'c'})
+  .map(function(v) return v[2] end)
+assert(iter.concat == 'abc')

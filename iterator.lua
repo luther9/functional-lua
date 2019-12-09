@@ -86,10 +86,22 @@ local function seek(f, iter, v)
   end
 end
 
+local function checkCallable(f)
+  local fType = type(f)
+  if fType ~= 'function' then
+    local mt = getmetatable(iter)
+    if not mt or type(mt.__call) ~= 'function' then
+      error('Expected function, got ' .. fType, 3)
+    end
+  end
+end
+
 setmetatable(
   Iterator,
   {
     __call = function(class, iter)
+      checkCallable(iter)
+
       local self
 
       -- Yield only the elements where f(element) is truthy.
@@ -152,26 +164,46 @@ setmetatable(
 	unpack = unpack,
       }
 
+      -- Cached fields
+      local fields = {
+	-- Convert the iterator to an array. We can't return an Array object,
+	-- because that would require a circular dependency.
+	array = function()
+	  return {unpack()}
+	end,
+
+	-- Assuming all elements are numbers, return the sum.
+	sum = function()
+	  return reduce(function(a, b) return a + b end, 0)
+	end,
+
+	-- Assuming all elements are numbers, return the product.
+	product = function()
+	  return reduce(function(a, b) return a * b end, 1)
+	end,
+
+	-- Assuming all elements are strings, concatenate them all.
+	concat = function()
+	  return reduce(function(a, b) return a .. b end, '')
+	end,
+      }
+
       setmetatable(
 	self,
 	{
 	  __call = function()
-	    local iter_, v = iter()
-	    if iter_ then
-	      return class(iter_), v
-	    end
+	    return iter()
 	  end,
 
+	  -- If key is in fields, call that function, cache the result and
+	  -- return it.
 	  __index = function(self, key)
-	    if key == 'array' then
-	      -- Convert the iterator to an array and cache the result. We can't
-	      -- return an Array object, because that would require a circular
-	      -- dependency.
-	      local a = {unpack()}
-	      self.array = a
-	      return a
+	    local f = fields[key]
+	    if not f then
+	      return nil
 	    end
-	    return nil
+	    self[key] = f()
+	    return self[key]
 	  end,
 	})
 
