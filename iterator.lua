@@ -155,6 +155,11 @@ setmetatable(
 	end
       end
 
+      -- A method version of Iterator.zip.
+      local function zip(...)
+	return Iterator.zip(self, ...)
+      end
+
       self = {
 	filter = filter,
 	map = map,
@@ -162,6 +167,7 @@ setmetatable(
 	toFor = toFor,
 	forEach = forEach,
 	unpack = unpack,
+	zip = zip,
       }
 
       -- Cached fields
@@ -202,8 +208,9 @@ setmetatable(
 	    if not f then
 	      return nil
 	    end
-	    self[key] = f()
-	    return self[key]
+	    local v = f()
+	    self[key] = v
+	    return v
 	  end,
 	})
 

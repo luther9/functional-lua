@@ -70,3 +70,9 @@ local iter = Iterator
   .fromFor(ipairs{'a', 'b', 'c'})
   .map(function(v) return v[2] end)
 assert(iter.concat == 'abc')
+
+local iter0 = Iterator.count(1, 1).zip(Iterator.count(2, 2))
+local iter1, arr = iter0()
+assert(arr[1] == 1)
+assert(arr[2] == 2)
+assert(iter1() == nil)
