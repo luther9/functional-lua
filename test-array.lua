@@ -24,12 +24,16 @@ local Array = require'array'
 local a = Array()
 assert(#a == 0)
 
-local a = Array{3, 4}
+local a = Array(3, 4)
 assert(a[1] == 3)
 assert(a[2] == 4)
 
-local iter0 = Array{10}:iterator()
-local iter1, i, v = iter0()
-assert(i == 1)
-assert(v == 10)
+local a = Array.copy{3, 4}
+assert(a[1] == 3)
+assert(a[2] == 4)
+
+local iter0 = Array(10):iterator()
+local iter1, v = iter0()
+assert(v[1] == 1)
+assert(v[2] == 10)
 assert(iter1() == nil)
