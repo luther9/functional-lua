@@ -74,17 +74,91 @@ Iterator = {
   count = count,
   fromFor = fromFor,
   zip = zip,
-}
 
--- Helper function for the filter method.
-local function seek(f, iter, v)
-  if iter then
-    if f(v) then
-      return iter.filter(f), v
+  __call = function(self)
+    return self._f()
+  end,
+
+  -- Yield only the elements where f(element) is truthy.
+  filter = function(self, f)
+    local function seek(iter, v)
+      if iter then
+	if f(v) then
+	  return iter:filter(f), v
+	end
+	return seek(iter())
+      end
     end
-    return seek(f, iter())
-  end
-end
+    return Iterator(
+      function()
+	return seek(self())
+      end)
+  end,
+
+  -- Make a new iterator where f is applied to each element.
+  map = function(self, f)
+    return Iterator(
+      function()
+	local iter, v = self()
+	if iter then
+	  return iter:map(f), f(v)
+	end
+      end)
+  end,
+
+  -- Combine all elements of the iterator into a single value. init is the
+  -- seed value. f is called as f(init, element) for each element.
+  reduce = function(self, f, init)
+    local iter, v = self()
+    if not iter then
+      return init
+    end
+    return iter:reduce(f, f(init, v))
+  end,
+
+  -- Convert the iterator for use in a for loop. The resulting iterator will
+  -- yield the same function and value as an Iterator object. The function
+  -- result should usually be ignored in the loop body.
+  toFor = function(self)
+    return function(_, self) return self() end, nil, self
+  end,
+
+  -- Execute f(element) for each element in the iterator.
+  forEach = function(self, f)
+    for _, v in self:toFor() do
+      f(v)
+    end
+  end,
+
+  -- Return all elements from the iterator.
+  unpack = function(self)
+    local iter, v = self()
+    if iter then
+      return v, iter:unpack()
+    end
+  end,
+
+  -- Convert the iterator to an array.
+  array = function(self)
+    return {self:unpack()}
+  end,
+
+  -- Assuming all elements are numbers, return the sum.
+  sum = function(self)
+    return self:reduce(function(a, b) return a + b end, 0)
+  end,
+
+  -- Assuming all elements are numbers, return the product.
+  product = function(self)
+    return self:reduce(function(a, b) return a * b end, 1)
+  end,
+
+  -- Assuming all elements are strings, concatenate them all.
+  concat = function(self)
+    return self:reduce(function(a, b) return a .. b end, '')
+  end,
+}
+Iterator.__index = Iterator
 
 local function checkCallable(f)
   local fType = type(f)
@@ -101,119 +175,8 @@ setmetatable(
   {
     __call = function(class, iter)
       checkCallable(iter)
-
-      local self
-
-      -- Yield only the elements where f(element) is truthy.
-      local function filter(f)
-	return class(
-	  function()
-	    return seek(f, self())
-	  end)
-      end
-
-      -- Make a new element where f is applied to each element.
-      local function map(f)
-	return class(
-	  function()
-	    local iter, v = self()
-	    if iter then
-	      return iter.map(f), f(v)
-	    end
-	  end)
-      end
-
-      -- Combine all elements of the iterator into a single value. init is the
-      -- seed value. f is called as f(init, element) for each element.
-      local function reduce(f, init)
-	local iter, v = self()
-	if not iter then
-	  return init
-	end
-	return iter.reduce(f, f(init, v))
-      end
-
-      -- Convert the iterator for use in a for loop. The resulting iterator will
-      -- yield the same function and value as an Iterator object. The function
-      -- result should usually be ignored in the loop body.
-      local function toFor()
-	return function(_, self) return self() end, nil, self
-      end
-
-      -- Execute f(element) for each element in the iterator.
-      local function forEach(f)
-	for _, v in toFor() do
-	  f(v)
-	end
-      end
-
-      -- Return all elements from the iterator.
-      local function unpack()
-	local iter, v = self()
-	if iter then
-	  return v, iter.unpack()
-	end
-      end
-
-      -- A method version of Iterator.zip.
-      local function zip(...)
-	return Iterator.zip(self, ...)
-      end
-
-      self = {
-	filter = filter,
-	map = map,
-	reduce = reduce,
-	toFor = toFor,
-	forEach = forEach,
-	unpack = unpack,
-	zip = zip,
-      }
-
-      -- Cached fields
-      local fields = {
-	-- Convert the iterator to an array. We can't return an Array object,
-	-- because that would require a circular dependency.
-	array = function()
-	  return {unpack()}
-	end,
-
-	-- Assuming all elements are numbers, return the sum.
-	sum = function()
-	  return reduce(function(a, b) return a + b end, 0)
-	end,
-
-	-- Assuming all elements are numbers, return the product.
-	product = function()
-	  return reduce(function(a, b) return a * b end, 1)
-	end,
-
-	-- Assuming all elements are strings, concatenate them all.
-	concat = function()
-	  return reduce(function(a, b) return a .. b end, '')
-	end,
-      }
-
-      setmetatable(
-	self,
-	{
-	  __call = function()
-	    return iter()
-	  end,
-
-	  -- If key is in fields, call that function, cache the result and
-	  -- return it.
-	  __index = function(self, key)
-	    local f = fields[key]
-	    if not f then
-	      return nil
-	    end
-	    local v = f()
-	    self[key] = v
-	    return v
-	  end,
-	})
-
+      local self = {_f = iter}
+      setmetatable(self, class)
       return self
     end,
   })

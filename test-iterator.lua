@@ -28,21 +28,21 @@ local iter1, n = iter0()
 assert(n == 1)
 assert(iter1() == nil)
 
-local iter0 = Iterator.count(1, 3).filter(function(x) return x % 2 == 0 end)
+local iter0 = Iterator.count(1, 3):filter(function(x) return x % 2 == 0 end)
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
 
-local iter0 = Iterator.count(1, 1).map(function(x) return x * 2 end)
+local iter0 = Iterator.count(1, 1):map(function(x) return x * 2 end)
 local iter1, n = iter0()
 assert(n == 2)
 assert(iter1() == nil)
 
 assert(
-  Iterator.count(1, 10).reduce(function(sum, x) return sum + x end, 0) == 55)
+  Iterator.count(1, 10):reduce(function(sum, x) return sum + x end, 0) == 55)
 
 local t = {}
-Iterator.count(1, 2).forEach(function(x) t[x] = x end)
+Iterator.count(1, 2):forEach(function(x) t[x] = x end)
 assert(t[1] == 1)
 assert(t[2] == 2)
 
@@ -52,7 +52,7 @@ assert(v[1] == 1)
 assert(v[2] == 'one')
 assert(iter1() == nil)
 
-local t = Iterator.count(10, 11).array
+local t = Iterator.count(10, 11):array()
 assert(t[1] == 10)
 assert(t[2] == 11)
 
@@ -63,15 +63,15 @@ assert(arr[2] == 2)
 assert(iter1() == nil)
 
 local iter = Iterator.count(1, 4)
-assert(iter.sum == 10)
-assert(iter.product == 24)
+assert(iter:sum() == 10)
+assert(iter:product() == 24)
 
 local iter = Iterator
   .fromFor(ipairs{'a', 'b', 'c'})
-  .map(function(v) return v[2] end)
-assert(iter.concat == 'abc')
+  :map(function(v) return v[2] end)
+assert(iter:concat() == 'abc')
 
-local iter0 = Iterator.count(1, 1).zip(Iterator.count(2, 2))
+local iter0 = Iterator.count(1, 1):zip(Iterator.count(2, 2))
 local iter1, arr = iter0()
 assert(arr[1] == 1)
 assert(arr[2] == 2)
