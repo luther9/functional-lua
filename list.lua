@@ -22,11 +22,144 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 local null
 local Node
 
--- Return a linked list based on the iter function. The first node will always
--- be evaluated to determine if the list is empty.
-local function fromIter(iter)
-  local iter_ <const>, data <const> = iter()
-  return iter_ and Node(data, iter_) or null
+local function merge(...)
+  local result <const> = {}
+  for _, t in ipairs{...} do
+    for k, v in pairs(t) do
+      result[k] = v
+    end
+  end
+  return result
+end
+
+-- We have to include almost all methods in List, so the user can get them as
+-- standalone functions that work with both null and Node objects.
+
+local function fold(list, f, init)
+  if list == null then
+    return init
+  end
+  return fold(list.next, f, f(init, list[1]))
+end
+
+local function len(list)
+  return fold(list, function(n) return n + 1 end, 0)
+end
+
+local function eq(a, b)
+  if rawequal(a, b) then
+    return true
+  end
+  if rawequal(a, null) or rawequal(b, null) or a[1] ~= b[1] then
+    return false
+  end
+  return eq(a.next, b.next)
+end
+
+local function nodeLt(a, b, comp)
+  local a1 <const> = a[1]
+  local b1 <const> = b[1]
+  if a1 < b1 then
+    return true
+  end
+  if a1 > b1 then
+    return false
+  end
+  return comp(a.next, b.next)
+end
+
+local function lt(a, b)
+  if b == null then
+    return false
+  end
+  if a == null then
+    return true
+  end
+  return nodeLt(a, b, lt)
+end
+
+local function le(a, b)
+  if a == null then
+    return true
+  end
+  if b == null then
+    return false
+  end
+  return nodeLt(a, b, le)
+end
+
+local function __concat(a, b)
+  if a == null then
+    return b
+  end
+  return Node(
+    a[1],
+    function()
+      return a.next .. b
+    end)
+end
+
+local metamethods <const> = {
+  __len = len,
+  __eq = eq,
+  __lt = lt,
+  __le = le,
+  __concat = __concat,
+}
+
+local function lenEq(list, n)
+  if list == null then
+    return n == 0
+  end
+  if n < 1 then
+    return false
+  end
+  return lenEq(list.next, n - 1)
+end
+
+local function lenLt(list, n)
+  if list == null then
+    return 0 < n
+  end
+  if n <= 1 then
+    return false
+  end
+  return lenLt(list.next, n - 1)
+end
+
+local function lenLe(list, n)
+  if list == null then
+    return 0 <= n
+  end
+  if n < 1 then
+    return false
+  end
+  return lenLe(list.next, n - 1)
+end
+
+local function filter(list, f)
+  if list == null then
+    return list
+  end
+  local function nextFilter()
+    return filter(list.next, f)
+  end
+  local x <const> = list[1]
+  if f(x) then
+    return Node(x, nextFilter)
+  end
+  return nextFilter()
+end
+
+local function map(list, f)
+  if list == null then
+    return list
+  end
+  return Node(
+    f(list[1]),
+    function()
+      return map(list.next, f)
+    end)
 end
 
 local function getNext(_, node)
@@ -36,45 +169,40 @@ local function getNext(_, node)
   end
 end
 
+local List <const> = merge(
+  metamethods,
+  {
+    fold = fold,
+    lenEq = lenEq,
+    lenLt = lenLt,
+    lenLe = lenLe,
+    filter = filter,
+    map = map,
+  })
+
 -- Abstract base class for null and Node.
 local List <const> = {
   -- Used with for loops. Yields pairs of (node, data).
   nodes = function(list)
     return getNext, nil, Node(nil, list)
   end,
+
+  lenNe = function(list, n)
+    return not list:lenEq(n)
+  end,
+
+  lenGt = function(list, n)
+    return not list:lenLe(n)
+  end,
+
+  lenGe = function(list, n)
+    return not list:lenLt(n)
+  end,
 }
 
 -- The empty list. This is a singleton object. It is its own metatable.
-null = {
-  __index = List,
-
-  __len = function()
-    return 0
-  end,
-
-  __eq = function()
-    return false
-  end,
-
-  __lt = function(a, b)
-    return b ~= null
-  end,
-
-  __le = function()
-    return true
-  end,
-}
+null = {__index = List}
 setmetatable(null, null)
-
-local function ltIfDifferent(a, b)
-  if b == null or a[1] > b[1] then
-    return false
-  end
-  if a[1] < b[1] then
-    return true
-  end
-  return nil
-end
 
 -- A linked list node.
 Node = {
@@ -83,52 +211,19 @@ Node = {
       return nil
     end
     if key == 'next' then
-      local tail <const> = fromIter(node._iter)
-      node.next = tail
-      node._iter = nil
-      return tail
+      return node._iter()
     end
     if key == math.floor(key) and key > 1 then
       return node.next[key - 1]
     end
-    return Node[key]
-  end,
-
-  __len = function(node)
-    return 1 + #node.next
-  end,
-
-  __eq = function(a, b)
-    if b == null or a[1] ~= b[1] then
-      return false
-    end
-    return a.next == b.next
-  end,
-
-  __lt = function(a, b)
-    local comp <const> = ltIfDifferent(a, b)
-    if comp ~= nil then
-      return comp
-    end
-    return a.next < b.next
-  end,
-
-  __le == function(a, b)
-    local comp <const> = ltIfDifferent(a, b)
-    if comp ~= nil then
-      return comp
-    end
-    return a.next <= b.next
+    return List[key]
   end,
 }
 setmetatable(
   Node,
   {
-    __index = List,
-
-    -- Return a linked list node. First argument is the data. If nxt is a
-    -- function, it will be used as an iterator to lazily evaluate the rest of
-    -- the list. Otherwise, nxt must be null or a Node.
+    -- Return a linked list node. First argument is the data. nxt must be either
+    -- a list or a function that has no parameters and returns a list.
     __call = function(cls, data, nxt)
       local node <const> = {
 	data,
@@ -139,8 +234,21 @@ setmetatable(
     end,
   })
 
+local function iota(count, start, step)
+  local i <const> = start or 1
+  return
+    count and count < 1 and null
+    or Node(
+      i,
+      function()
+	return iota(count and count - 1, i + (step or 1), step)
+      end)
+end
+
 return {
   null = null,
   Node = Node,
-  fromIter = fromIter,
+  iota = iota,
 }
+
+return List
