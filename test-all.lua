@@ -23,5 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package.path = './?.lua;' .. package.path
 
+require'test-list'
 require'test-iterator'
 require'test-array'

@@ -35,6 +35,17 @@ end
 -- We have to include almost all methods in List, so the user can get them as
 -- standalone functions that work with both null and Node objects.
 
+local function iota(count, start, step)
+  local i <const> = start or 1
+  return
+    count and count < 1 and null
+    or Node(
+      i,
+      function()
+	return iota(count and count - 1, i + (step or 1), step)
+      end)
+end
+
 local function fold(list, f, init)
   if list == null then
     return init
@@ -172,53 +183,54 @@ end
 local List <const> = merge(
   metamethods,
   {
+    iota = iota,
     fold = fold,
     lenEq = lenEq,
     lenLt = lenLt,
     lenLe = lenLe,
     filter = filter,
     map = map,
+
+    -- Used with for loops. Yields pairs of (node, data).
+    nodes = function(list)
+      return getNext, nil, Node(nil, list)
+    end,
+
+    lenNe = function(list, n)
+      return not list:lenEq(n)
+    end,
+
+    lenGt = function(list, n)
+      return not list:lenLe(n)
+    end,
+
+    lenGe = function(list, n)
+      return not list:lenLt(n)
+    end,
   })
 
--- Abstract base class for null and Node.
-local List <const> = {
-  -- Used with for loops. Yields pairs of (node, data).
-  nodes = function(list)
-    return getNext, nil, Node(nil, list)
-  end,
-
-  lenNe = function(list, n)
-    return not list:lenEq(n)
-  end,
-
-  lenGt = function(list, n)
-    return not list:lenLe(n)
-  end,
-
-  lenGe = function(list, n)
-    return not list:lenLt(n)
-  end,
-}
-
 -- The empty list. This is a singleton object. It is its own metatable.
-null = {__index = List}
+null = merge(metamethods, {__index = List})
 setmetatable(null, null)
+List.null = null
 
 -- A linked list node.
-Node = {
-  __index = function(node, key)
-    if key == 1 then
-      return nil
-    end
-    if key == 'next' then
-      return node._iter()
-    end
-    if key == math.floor(key) and key > 1 then
-      return node.next[key - 1]
-    end
-    return List[key]
-  end,
-}
+Node = merge(
+  metamethods,
+  {
+    __index = function(node, key)
+      if key == 1 then
+	return nil
+      end
+      if key == 'next' then
+	return node._iter()
+      end
+      if key == math.floor(key) and key > 1 then
+	return node.next[key - 1]
+      end
+      return List[key]
+    end,
+  })
 setmetatable(
   Node,
   {
@@ -233,22 +245,6 @@ setmetatable(
       return node
     end,
   })
-
-local function iota(count, start, step)
-  local i <const> = start or 1
-  return
-    count and count < 1 and null
-    or Node(
-      i,
-      function()
-	return iota(count and count - 1, i + (step or 1), step)
-      end)
-end
-
-return {
-  null = null,
-  Node = Node,
-  iota = iota,
-}
+List.Node = Node
 
 return List
