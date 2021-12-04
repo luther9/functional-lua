@@ -225,7 +225,7 @@ Node = merge(
       if key == 'next' then
 	return node._iter()
       end
-      if key == math.floor(key) and key > 1 then
+      if type(key) == 'number' and key > 1 then
 	return node.next[key - 1]
       end
       return List[key]
