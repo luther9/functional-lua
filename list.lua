@@ -19,18 +19,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
+local fp <const> = require'functional'
+
 local null
 local Node
-
-local function merge(...)
-  local result <const> = {}
-  for _, t in ipairs{...} do
-    for k, v in pairs(t) do
-      result[k] = v
-    end
-  end
-  return result
-end
 
 -- We have to include almost all methods in List, so the user can get them as
 -- standalone functions that work with both null and Node objects.
@@ -180,7 +172,7 @@ local function getNext(_, node)
   end
 end
 
-local List <const> = merge(
+local List <const> = fp.merge(
   metamethods,
   {
     iota = iota,
@@ -210,12 +202,12 @@ local List <const> = merge(
   })
 
 -- The empty list. This is a singleton object. It is its own metatable.
-null = merge(metamethods, {__index = List})
+null = fp.merge(metamethods, {__index = List})
 setmetatable(null, null)
 List.null = null
 
 -- A linked list node.
-Node = merge(
+Node = fp.merge(
   metamethods,
   {
     __index = function(node, key)

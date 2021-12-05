@@ -21,7 +21,20 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]
 
-package.path = './?.lua;' .. package.path
+local function searcher(modulename)
+  local filename
+  if modulename == 'functional' then
+    filename = 'init.lua'
+  else
+    filename = modulename:match('functional/(.+)')
+  end
+  if filename then
+    local module <const> = loadfile(filename)()
+    return function() return module end, filname
+  end
+end
+
+table.insert(package.searchers, 2, searcher)
 
 require'test-list'
 require'test-iterator'
